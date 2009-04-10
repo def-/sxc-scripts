@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# Retrieves the message beginning at the specified line of a sxc out file. Then
+# removes the leading timestamp and contact's name in the first line and the
+# same number of characters in all the others.
+#
+# Example:
+# 2009-12-31T23:59:59 <alice@example.org> Arr!
+#                                         Brr!
+#                                         Crr!
+# This will result in:
+# Arr!
+# Brr!
+# Crr!
+#
+# Usage example: With this script you can easily decode base64 encoded data
+# someone sent to you. You just have to know the line number in the out file,
+# where the message you want to extract the data from, begins. Then enter
+# something like this to decode the message to a file called data:
+#
+# sxc-msg-extract out 25 | base64 -d > data
+#
+# Use the output of wc -l to get the last message:
+# sxc-msg-extract out `wc -l out | cut -d" " -f 1`
+
+set -e
+
+file=$1
+line=$2
+
+if [ ! $file -o ! $line ]; then
+  echo "Usage: $0 file line" >&2
+  exit 1
+fi
+
+first="true"
+
+# IFS = Internal Field Seperator
+# Don't remove whitespaces.
+tail -n +$line $file |
+while IFS="" read -r line; do
+  if [ "$first" = "true" ]; then
+    echo "$line"
+    first="false"
+    continue
+  fi
+
+  if echo "$line" | grep --quiet --invert-match "^ "; then
+    break
+  fi
+
+  echo "$line"
+done |
+# Remove the first characters in each line
+awk '
+NR == 1 {
+  if (substr($0, 1, 1) == " ") {
+    #print "First line is not the beginning of a message" | "cat >&2"S
+    exit 2
+  }
+  len = length($1" "$2" ") + 1
+}
+
+{
+  print substr($0, len)
+}
+'
+[ 2 -eq $? ] && {
+  let line=line-1
+  $0 $file $line
+}

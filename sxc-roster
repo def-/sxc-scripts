@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Print the roster in a base dir with sxc account directories. $1 is base dir,
+# else current dir.
+
+set -e
+
+print_roster()
+{
+  last=
+  for i in *@*/*@*; do
+    current=`echo $i | cut -d "/" -f1`
+    [ "$last" == "$current" ] || {
+      echo -n "$current ["
+      cat $current/nfo/presence | tr -d "\n"
+      echo "]"
+      last=$current
+    }
+    echo -n "  ["
+    cat "$i/nfo/presence" | tr -d "\n"
+    echo "] `echo $i | cut -d "/" -f2`"
+  done
+}
+
+[ "$1" ] && cd $1
+clear
+print_roster
+while true; do
+  pnotifywait --quiet --event modify *@*/nfo/presence *@*/*@*/nfo/presence
+  clear
+  print_roster
+done

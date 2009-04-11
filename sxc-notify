@@ -1,0 +1,44 @@
+#!/bin/sh
+
+notifier_account_out='dzen2 -p 3 -bg #FF0000 -fg #000000 -fn -*-terminus-*-r-normal-*-*-120-*-*-*-*-iso8859-15'
+notifier_contact_out='dzen2 -p 3 -bg #FFFFFF -fg #000000 -fn -*-terminus-*-r-normal-*-*-120-*-*-*-*-iso8859-15'
+notifier_contact_presence='dzen2 -p 3 -bg #FFFF00 -fg #000000 -fn -*-terminus-*-r-normal-*-*-120-*-*-*-*-iso8859-15'
+
+set -e
+
+[ "$1" ] && cd $1
+
+account_out()
+{
+  while line=`pnotifywait -q -e modify *@*/out`; do
+    file=`echo "$line" | cut -d" " -f1`
+    jid=`echo "$file" | cut -d/ -f1`
+    text=`(echo -n "${jid}: "; sxc-out-extract "$file" \`wc -l "$file"\`) | head -n1`
+    echo "$text" | $notifier_account_out &
+  done
+}
+
+contact_out()
+{
+  while line=`pnotifywait -q -e modify *@*/*@*/out`; do
+    file=`echo "$line" | cut -d" " -f1`
+    text=`sxc-out-extract "$file" \`wc -l "$file"\` | head -n1`
+    echo "$text" | $notifier_contact_out &
+  done
+}
+
+contact_presence()
+{
+  while line=`pnotifywait -q -e close_write *@*/*@*/nfo/presence`; do
+    file=`echo "$line" | cut -d" " -f1`
+    jid=`echo "$file" | cut -d/ -f2`
+    presence=`cat "$file" | tr -d "\n"`
+    [ "offline" == "$presence" ] && continue
+    text=`(echo -n "[$presence] $jid")`
+    echo "$text" | $notifier_contact_presence &
+  done
+}
+
+account_out &
+contact_out &
+contact_presence &

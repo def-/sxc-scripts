@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# A simple example for reformatting the contact's out files of sxc.
+
+myjid="$1"
+: ${SXC_IN="<"}
+: ${SXC_OUT=">"}
+
+len_in=`echo "$SXC_IN" | wc -m`
+len_out=`echo "$SXC_OUT" | wc -m`
+
+
+[ "$myjid" ] || {
+  echo "Usage: $0 myjid" >&2
+  exit 1
+}
+
+len=0
+while IFS="" read -r line; do
+  echo "$line" | grep --quiet --invert-match "^ " && {
+    len=$(( `echo "$line" | cut -d" " -f-2 | wc -m`+1 ))
+    [ "<$myjid>" == `echo "$line" | cut -d" " -f2` ] && {
+      echo -n "$SXC_OUT"
+      len_indent=$len_out
+    } || {
+      echo -n "$SXC_IN"
+      len_indent=$len_in
+    }
+  } || {
+    [ $len -gt 0 ] && for i in `seq 2 "$len_indent"`; do echo -n " "; done
+  }
+  [ $len -gt 0 ] && echo "$line" | cut -c "$len-"
+done

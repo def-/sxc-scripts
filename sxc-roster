@@ -5,28 +5,103 @@
 
 set -e
 
-print_roster()
+: ${STAT:=stat}
+
+LIGHT_GREEN="\033[1;32m"
+LIGHT_RED="\033[1;31m"
+LIGHT_PURPLE="\033[1;35m"
+DARK_GRAY="\033[1;30m"
+LIGHT_GRAY="\033[0;37m"
+LIGHT_CYAN="\033[1;36m"
+YELLOW="\033[1;33m"
+NO_COLOR="\033[0m"
+
+color_presence()
 {
-  last=
+  while read -r line; do
+    case $line in
+      offline|invisible)
+        echo -e "$LIGHT_RED$line$NO_COLOR"
+        ;;
+      away|xaway)
+        echo -e "$YELLOW$line$NO_COLOR"
+        ;;
+      busy)
+        echo -e "$LIGHT_PURPLE$line$NO_COLOR"
+        ;;
+      available|chat)
+        echo -e "$LIGHT_GREEN$line$NO_COLOR"
+        ;;
+      *)
+        echo "$line"
+        ;;
+    esac
+  done
+}
+
+color_number()
+{
+  while read -r line; do
+    case $line in
+      0)
+        echo -e "$DARK_GRAY$line$NO_COLOR"
+        ;;
+      *)
+        echo -e "$LIGHT_GREEN$line$NO_COLOR"
+        ;;
+    esac
+  done
+}
+
+gen_roster()
+{
+  local READ_TIME=`$STAT --format=%Y read`
+  local last=
   for i in *@*/*@*; do
     current=`echo $i | cut -d "/" -f1`
     [ "$last" == "$current" ] || {
       echo -n "$current ["
-      cat $current/nfo/presence | tr -d "\n"
+      tac $current/out | grep -v "^ " | cut -d" " -f1 | 
+      tr -t "T" " " | while read -r line; do
+        TIME=`date -d "$line" +%s`
+        [ $TIME -lt $READ_TIME ] && break
+        echo $TIME
+      done | wc -l | color_number | tr -d "\n"
+
+      echo -n "] ["
+      cat $current/nfo/presence | color_presence | tr -d "\n"
       echo "]"
       last=$current
     }
+
     echo -n "  ["
-    cat "$i/nfo/presence" | tr -d "\n"
-    echo "] `echo $i | cut -d "/" -f2`"
+    tac $i/out | grep -v "^ " | grep -v "^[^ ]* <$current>" | cut -d" " -f1 | 
+    tr -t "T" " " | while read -r line; do
+      TIME=`date -d "$line" +%s`
+      [ $TIME -lt $READ_TIME ] && break
+      echo $TIME
+    done | wc -l | color_number | tr -d "\n"
+
+    jid=`echo "$i" | cut -d"/" -f2`
+    name=`echo "$jid" | cut -d"@" -f1`
+    server=`echo "$jid" | cut -d"@" -f2`
+
+    echo -n "] ["
+    cat "$i/nfo/presence" | color_presence | tr -d "\n"
+    echo -e "] $LIGHT_CYAN$name$LIGHT_GRAY@$server$NO_COLOR"
   done
 }
 
+print_roster()
+{
+  TEXT="`gen_roster`"
+  clear
+  echo "$TEXT"
+}
+
 [ "$1" ] && cd $1
-clear
 print_roster
 while true; do
-  pnotifywait --quiet --event modify *@*/nfo/presence *@*/*@*/nfo/presence
-  clear
+  pnotifywait --quiet --quiet --event modify,close_write read *@*/nfo/presence *@*/*@*/nfo/presence *@*/out *@*/*@*/out
   print_roster
 done

@@ -23,8 +23,6 @@
 # Use the output of wc -l to get the last message:
 # sxc-msg-extract out `wc -l out | cut -d" " -f 1`
 
-set -e
-
 file=$1
 line=$2
 

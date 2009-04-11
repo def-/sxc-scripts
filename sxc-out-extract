@@ -1,0 +1,46 @@
+#!/bin/sh
+
+file=$1
+line=$2
+
+if [ ! $file -o ! $line ]; then
+  echo "Usage: $0 file line" >&2
+  exit 1
+fi
+
+first="true"
+
+# IFS = Internal Field Seperator
+# Don't remove whitespaces.
+tail -n +$line $file |
+while IFS="" read -r line; do
+  if [ "$first" = "true" ]; then
+    echo "$line"
+    first="false"
+    continue
+  fi
+
+  if echo "$line" | grep --quiet --invert-match "^ "; then
+    break
+  fi
+
+  echo "$line"
+done |
+# Remove the first characters in each line
+awk '
+NR == 1 {
+  if (substr($0, 1, 1) == " ") {
+    #First line is not the beginning of a message
+    exit 2
+  }
+  len = length($1" ") + 1
+}
+
+{
+  print substr($0, len)
+}
+'
+[ 2 -eq $? ] && {
+  let line=line-1
+  $0 $file $line
+}

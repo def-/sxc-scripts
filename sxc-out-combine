@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+# Combine multiple out files to one, will be output on stdout
+
+import sys
+
+def main(argv=None):
+  if not argv:
+    argv = sys.argv
+
+  if len(argv) < 3:
+    print >> sys.stderr, "Usage: " + argv[0] + " file1 file2 [...]"
+
+  # file, line
+  data = []
+
+  for name in argv[1:]:
+    data.append([file(name, "r"), None])
+
+  # Initial read
+  for d in data:
+    line = d[0].readline()
+    if line.startswith(" "):
+      continue
+    d[1] = line
+
+  # Circular read
+  while data:
+    data.sort(lambda x, y: cmp(x[1], y[1]))
+
+    print data[0][1][:-1] # Without newline at end
+    while True:
+      line = data[0][0].readline()
+      if not line:
+        del data[0]
+        break
+      if not line.startswith(" "):
+        data[0][1] = line
+        break
+      print line[:-1]
+
+if __name__ == '__main__':
+  main()

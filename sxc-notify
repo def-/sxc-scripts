@@ -22,8 +22,10 @@ contact_out()
 {
   while line=`pnotifywait -q -e modify *@*/*@*/out`; do
     file=`echo "$line" | cut -d" " -f1`
+    ajid=`echo "$file" | cut -d/ -f1`
     text=`sxc-out-extract "$file" \`wc -l "$file"\` | head -n1`
-    echo "$text" | $notifier_contact_out &
+    cjid=`echo "$text" | cut -d" " -f1 | tr -d "<>"`
+    [ "$cjid" != "$ajid" ] && echo "$text" | $notifier_contact_out &
   done
 }
 

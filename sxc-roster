@@ -58,7 +58,7 @@ gen_roster()
   local READ_TIME=`$STAT --format=%Y read`
   local last=
   for i in *@*/*@*; do
-    current=`echo $i | cut -d "/" -f1`
+    current=`echo "$i" | cut -d "/" -f1`
     [ "$last" == "$current" ] || {
       echo -n "$current ["
       tac $current/out | while IFS= read -r line; do
@@ -91,7 +91,10 @@ gen_roster()
 
     echo -n "] ["
     cat "$i/nfo/presence" | color_presence | tr -d "\n"
-    echo -e "] $LIGHT_CYAN$name$LIGHT_GRAY@$server$NO_COLOR"
+    echo -n "] $LIGHT_CYAN$name$LIGHT_GRAY@$server$NO_COLOR"
+
+    msg=`cat "$i/nfo/message" | head -n1`
+    [ "$msg" ] && echo " ($LIGHT_CYAN$msg$NO_COLOR)" || echo
   done
 }
 
@@ -99,7 +102,7 @@ print_roster()
 {
   TEXT="`gen_roster`"
   clear
-  echo "$TEXT"
+  echo -e "$TEXT"
 }
 
 [ "$1" ] && cd $1

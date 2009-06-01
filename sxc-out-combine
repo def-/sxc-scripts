@@ -10,6 +10,7 @@ def main(argv=None):
 
   if len(argv) < 3:
     print >> sys.stderr, "Usage: " + argv[0] + " file1 file2 [...]"
+    sys.exit(1)
 
   # file, line
   data = []

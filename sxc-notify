@@ -25,7 +25,10 @@ contact_out()
     ajid=`echo "$file" | cut -d/ -f1`
     text=`sxc-out-extract "$file" \`wc -l "$file"\` | head -n1`
     cjid=`echo "$text" | cut -d" " -f1 | tr -d "<>"`
-    [ "$cjid" != "$ajid" ] && echo "$text" | $notifier_contact_out &
+    [ "$cjid" != "$ajid" ] && (
+      mplayer ~/.sxc-notify/msg.wav &
+      echo "$text" | $notifier_contact_out &
+    )
   done
 }
 

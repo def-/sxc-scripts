@@ -1,0 +1,14 @@
+#!/bin/sh
+
+[ "$1" ] && cd $1
+
+first=true
+for i in *@*; do
+  if [ "$first" == "true" ]; then
+    tmux -u -L sxc new-session -d -n sxc -s sxc "echo -n \"$i, \"; sxc-start $i"
+    first=false
+  else
+    tmux -u -L sxc split-window -d "echo -n \"$i, \"; sxc-start $i"
+  fi
+done
+tmux -u -L sxc attach-session

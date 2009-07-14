@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ "$2" ]; then
+  cd $1
+  keyword=$2
+else
+  keyword=$1
+fi
+
+dir=*@*/*${keyword}*
+contact=`echo $dir | cut -d/ -f2`
+
+tmux -u -L sxc new-window -n $contact "cd $dir; inotail -n 50 -f out | sxc-out-reformat '`pwd | sed -e "s#.*/\(.*\)/.*#\1#"`'"
+tmux -u -L sxc split-window -l 5 "cd $dir; vim"

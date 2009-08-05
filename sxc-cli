@@ -6,9 +6,15 @@ first=true
 for i in *@*; do
   if [ "$first" == "true" ]; then
     tmux -u -L sxc new-session -d -n sxc -s sxc "echo -n \"$i, \"; sxc-start $i"
+    tmux -u -L sxc new-window -n $i "cd $i; inotail -n 50 -f out"
+    tmux -u -L sxc split-window -l 5 "cd $i; vim"
+    tmux -u -L sxc select-window -t 0
     first=false
   else
     tmux -u -L sxc split-window -d "echo -n \"$i, \"; sxc-start $i"
+    tmux -u -L sxc new-window -n $i "cd $i; inotail -n 50 -f out"
+    tmux -u -L sxc split-window -l 5 "cd $i; vim"
+    tmux -u -L sxc select-window -t 0
   fi
 done
 tmux -u -L sxc attach-session

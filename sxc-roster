@@ -103,6 +103,7 @@ print_roster()
   TEXT="`gen_roster`"
   clear
   echo -e "$TEXT"
+  echo -e '\a' # alert (BEL)
 }
 
 [ "$1" ] && cd $1

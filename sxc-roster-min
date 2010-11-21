@@ -87,14 +87,10 @@ gen_roster()
 
     jid=`echo "$i" | cut -d"/" -f2`
     name=`echo "$jid" | cut -d"@" -f1`
-    server=`echo "$jid" | cut -d"@" -f2`
 
     echo -n "] ["
     cat "$i/nfo/presence" | color_presence | tr -d "\n"
-    echo -n "] $LIGHT_CYAN$name$LIGHT_GRAY@$server$NO_COLOR"
-
-    msg=`cat "$i/nfo/message" | head -n1`
-    [ "$msg" ] && echo " ($LIGHT_CYAN$msg$NO_COLOR)" || echo
+    echo -n "] $LIGHT_CYAN$name$NO_COLOR\n"
   done
 }
 
